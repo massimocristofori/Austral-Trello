@@ -3,7 +3,7 @@
 window.TrelloPowerUp.initialize({
   'list-actions': function(t, options) {
     return [{
-      text: 'Export this list as CSV',
+      text: 'Generate Transportation Agenda',
       callback: async function(t) {
         // Get current list info
         const list = await t.list('id', 'name');
