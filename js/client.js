@@ -1,12 +1,12 @@
 window.TrelloPowerUp.initialize({
-  'board-buttons': function (t) {
+  'list-actions': function (t, options) {
     return [{
-      text: 'Export List CSV',
+      text: 'Export this list as CSV',
       callback: function (t) {
         return t.popup({
           title: 'Export List',
           url: 'export.html',
-          height: 250
+          height: 200
         });
       }
     }];
