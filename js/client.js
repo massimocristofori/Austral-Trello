@@ -1,44 +1,41 @@
 window.TrelloPowerUp.initialize({
-  'list-actions': function(t) {
+  'board-buttons': function(t) {
     return [{
-      text: 'Export linked cards CSV 1',
+      text: 'Export Board CSV',
       callback: async function(t) {
         try {
-          const list = await t.list('id', 'name');
           const cards = await t.cards('name', 'idList');
+          const lists = await t.lists('id', 'name');
 
-          const filtered = cards.filter(c => c.idList === list.id);
+          // Map listId → listName
+          const listMap = {};
+          lists.forEach(l => listMap[l.id] = l.name);
 
-          const names = [];
+          // Keep only NON-linked cards (exclude URLs)
+          const normalCards = cards.filter(c => !c.name.startsWith('http'));
 
-          for (const c of filtered) {
-            if (c.name.startsWith('http')) {
-              const shortId = extractCardId(c.name);
-              if (shortId) {
-                try {
-                  const realName = await fetchCardName(shortId);
-                  names.push(realName);
-                } catch {
-                  names.push(c.name); // fallback
-                }
-              } else {
-                names.push(c.name);
-              }
-            } else {
-              names.push(c.name);
-            }
+          if (!normalCards.length) {
+            alert('No normal cards found');
+            return;
           }
 
-          const csv = ['Card Name', ...names.map(n => `"${n.replace(/"/g,'""')}"`)].join('\n');
+          // Build CSV
+          const header = 'List Name,Card Name';
+          const rows = normalCards.map(c => {
+            const listName = listMap[c.idList] || '';
+            const cardName = c.name.replace(/"/g, '""');
+            return `"${listName}","${cardName}"`;
+          });
 
+          const csv = [header, ...rows].join('\n');
+
+          // Download
           const blob = new Blob([csv], { type: 'text/csv' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `${list.name}.csv`;
+          a.download = 'board-export.csv';
           a.click();
-
-          return t.closePopup();
 
         } catch (err) {
           alert('Error: ' + err.message);
@@ -47,15 +44,3 @@ window.TrelloPowerUp.initialize({
     }];
   }
 });
-
-// helpers
-function extractCardId(url) {
-  const match = url.match(/\/c\/([a-zA-Z0-9]+)/);
-  return match ? match[1] : null;
-}
-
-async function fetchCardName(shortId) {
-  const res = await fetch(`https://api.trello.com/1/cards/${shortId}?fields=name`);
-  const data = await res.json();
-  return data.name;
-}
