@@ -1,6 +1,6 @@
 // js/client.js
 
-console.log('Power-Up loaded'); // <-- This confirms the Power-Up is being loaded by Trello
+alert('Power-Up loaded'); // <-- This confirms the Power-Up is being loaded by Trello
 
 window.TrelloPowerUp.initialize({
   'board-buttons': function(t, options) {
