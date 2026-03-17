@@ -1,22 +1,22 @@
-// js/client.js
-
 window.TrelloPowerUp.initialize({
   'list-actions': function(t, options) {
     return [{
-      text: 'Generate Transportation Agenda',
+      text: 'Generate TA',
       callback: async function(t) {
-        // Get current list info
         const list = await t.list('id', 'name');
+        const cards = await t.cards('name', 'idList', 'idBoard');
 
-        // Get all cards on the board
-        const cards = await t.cards('name', 'idList');
+        // Filter only cards in this list that are from a different board
+        const linkedCards = cards.filter(c => c.idList === list.id && c.idBoard !== list.idBoard);
 
-        // Filter cards belonging to this list
-        const filteredCards = cards.filter(c => c.idList === list.id);
+        if (linkedCards.length === 0) {
+          alert('No linked cards in this list');
+          return t.closePopup();
+        }
 
-        // Build CSV
+        // CSV
         const header = 'Card Name';
-        const rows = filteredCards.map(c => `"${c.name.replace(/"/g, '""')}"`);
+        const rows = linkedCards.map(c => `"${c.name.replace(/"/g, '""')}"`);
         const csv = [header, ...rows].join('\n');
 
         // Download CSV
@@ -24,10 +24,9 @@ window.TrelloPowerUp.initialize({
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${list.name}.csv`;
+        a.download = `${list.name}-linked-cards.csv`;
         a.click();
 
-        // Close the list-action menu
         return t.closePopup();
       }
     }];
